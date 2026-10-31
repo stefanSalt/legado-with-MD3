@@ -75,7 +75,10 @@ object ReaderCurlTouchPolicy {
         // A one- or two-pixel final travel previously rounded to 0 ms, committing the page
         // before Compose had a chance to present the final curl frame.
         val minDurationMillis = (baseDurationMillis * MIN_SETTLE_FRACTION).toInt().coerceAtLeast(1)
-        return (baseDurationMillis * distance / pageWidth).toInt().coerceAtLeast(minDurationMillis)
+        // 上限必须钳到基准：点击翻页时触点从 0.9W 走到 -W，行程是 1.9 个页宽，不钳的话
+        // 收尾会跑到 1.9 倍基准（默认挡 684ms、慢挡 1026ms），比覆盖 / 滑动 / 渐变慢一档还多。
+        return (baseDurationMillis * distance / pageWidth).toInt()
+            .coerceIn(minDurationMillis, baseDurationMillis)
     }
 
     /**

@@ -2402,23 +2402,16 @@ private fun SimulationPageStack(
                     drawCurlBackShadow(frame)
                 }
             }
-            // 翻起页背面（镜像的当前页）+ 折缝阴影
+            // 翻起页背面 + 折缝阴影
             clipPath(path0) { clipPath(pathBack) {
                 // 纸背底色：对照旧 View `drawColor(背景图平均色)`，遮住下面的当前页，
                 // 让翻起的纸片是一张不透明的纸而不是透出正面内容。
                 drawRect(background)
-                // Canvas.drawBitmap() in the View implementation naturally kept sampling
-                // within the screenshot's bounds. A transformed GraphicsLayer otherwise
-                // samples beyond its recorded page surface as opaque black on some devices,
-                // producing a dark wedge between the two sides of a curl. Clip in source
-                // coordinates first so uncovered back-page pixels keep the page background
-                // drawn above, while the complete page content remains mirrored.
-                withTransform({
-                    transform(paths.mirror)
-                    clipRect(0f, 0f, size.width, size.height)
-                }) {
-                    drawPageSnapshot(baseBitmap, baseLayer, widthPx, heightPx)
-                }
+                // 这里原本把 baseBitmap 按 `paths.mirror` 镜像画在纸背上，观感上是
+                // 「上一页整页正文（镜像）压在当前页上」：前进翻到中段时占屏约 30%、
+                // 回翻起手第一帧占屏约 37%，且会一直持续到折页滑出（默认挡 684ms、
+                // 慢挡 1026ms）。纸背改成只留纸色 + 阴影，折页的立体感由下面两道
+                // 阴影负责，不再叠一层正文。
                 drawCurlFolderShadow(frame)
             } }
             drawCurlFrontShadows(frame, paths)
